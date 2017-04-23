@@ -64,7 +64,7 @@ except:
 
 
 
-#Write a function called get_twitter_user that goes to Twitter, gets data about a Twitter user, and dumps it in the cache. 
+# Write a function called get_twitter_user that goes to Twitter, gets data about a Twitter user, and dumps it in the cache:
 
 def get_twitter_user(desiredUser):
 	if desiredUser + "_user" in cache_dictionary:
@@ -79,7 +79,7 @@ def get_twitter_user(desiredUser):
 	return User
 
 
-# Write a function called get_twitter_term that goes to Twitter, gets tweets associated with a search term, and dumps them in the cache.
+# Write a function called get_twitter_term that goes to Twitter, gets tweets associated with a search term, and dumps them in the cache:
 
 def get_twitter_term(keyPhrase):
 	if keyPhrase + "_tweets"  in cache_dictionary:
@@ -96,7 +96,7 @@ def get_twitter_term(keyPhrase):
 
 
 
-# Write a function called get_OMDB_info that goes to the OMDB API, gets data about a specified movie, and dumps the result in the cache.
+# Write a function called get_OMDB_info that goes to the OMDB API, gets data about a specified movie, and dumps the result in the cache:
 
 def get_OMDB_info(movie):
 	if movie in cache_dictionary:
@@ -117,34 +117,32 @@ def get_OMDB_info(movie):
 	return results
 
 
-# Create a class to handle Twitter users, call it twitterUsers. This will contain variables to store the user's ID, screen name, favorites count,
-# and followers count. 
+# Create a class to handle Twitter users, call it twitterUsers. This will contain variables to store the user's ID, screen name, favorites count, and followers count. 
 
 class twitterUsers(object):
 	#User["id"], User["screen_name"], User["favourites_count"], User["followers_count"]
 
-	# Define a constructor which takes in a dictionary representing a twitter user, and stors the pertinent data in the proper variables
+	# Define a constructor which takes in a dictionary representing a Twitter user, and stores the pertinent data in the proper variables:
 	def __init__(self, UserDiction):
 		self.user_id = UserDiction["id"]
 		self.screen_name = UserDiction["screen_name"]
 		self.favourites_count = UserDiction["favourites_count"]
 		self.followers_count = UserDiction["followers_count"]
 
-	# Define a method that returns a the id of the user
+	# Define a method that returns a the ID of the user:
 	def __str__(self):
 		return self.user_id
 
-	# Define a method that returns a list in this format: [screenname, favorites count, followers count]
+	# Define a method that returns a list in this format: [screenname, favorites count, followers count]:
 	def infoList(self):
 		return [self.screen_name, self.favourites_count, self.followers_count]
 
 
 
-# make a class to handle the Movie data, called Movie. This will contain variables to store its title, its director, its imdb rating, a list of actors,
-# and the number of languages in the movie.
+# Create a class to handle the movie data; call it Movie. This will contain variables to store its title, its director, its IMDB rating, a list of actors, and the number of languages the movie is in:
 class Movie(object):
 
-	# Define a constructor which takes in a dictionary representing a Movie, and stors the pertinent data in the proper variables
+	# Define a constructor which takes in a dictionary representing a movie, and stores the pertinent data in the proper variables:
 	def __init__(self, MovieDiction):
 		self.title= MovieDiction["Title"]
 		self.director = MovieDiction["Director"]
@@ -153,11 +151,11 @@ class Movie(object):
 		self.numLang = len(MovieDiction["Language"].split(", "))
 		self.id = int((re.findall("tt([0-9]*)", MovieDiction["imdbID"]))[0])
 
-	# Define a _str_ method that returns the name of the movie
+	# Define a _str_ method that returns the name of the movie:
 	def __str__(self):
 		return self.title
 
-	# Define a method called infoList which returns a list in this format: [director, imdb rating, list of actors, number of languages]
+	# Define a method called infoList which returns a list in this format: [director, imdb rating, list of actors, number of languages]:
 	def infoList(self):
 		return [self.director, self.IMDB, self.actors, self.numLang, self.id]
 
@@ -180,72 +178,56 @@ class Tweet(object):
 	def infoList(self):
 		return [self.tweet_text, self.user, self.movie, self.favorites, self.retweets]
 
-#print(get_OMDB_info("waterworld").keys())
-#print(get_OMDB_info("shrek")["imdbID"])
-#print(Movie(get_OMDB_info("waterworld")).infoList())
-#print(get_twitter_term("trump")[0])
 
-# make a list containing the names of three movies
-threeMoviez = ["Power Rangers", "Beauty and the Beast", "The Fate of the Furious", "The Boss Baby", "Hidden Figures", "Smurfs: The Lost Village", "Phoenix Forgotten"]
+# Create a list containing the names of three movies:
+threeMoviez = ["Power Rangers", "Beauty and the Beast", "The Fate of the Furious", "The Boss Baby", "Hidden Figures",
+				 "Smurfs: The Lost Village", "Phoenix Forgotten"]
 
-# invoke the get_OMDB_info() function on all three of these movies
+# Invoke the get_OMDB_info() function on all three of these movies:
 threeMovieDictions = []
 for movie in threeMoviez:
 	threeMovieDictions.append(get_OMDB_info(movie))
 
-# Using threeMovieDiction, create a Movie instance class for each of the three movies
+# Using threeMovieDiction, create a Movie instance class for each of the three movies:
 threeMovies = []
 for movie in threeMovieDictions:
 	threeMovies.append(Movie(movie))
 
-# invoke the get_twitter_term() function for each of those three movies, store the resulting dictionaries in a list of tuples
+# Invoke the get_twitter_term() function for each of those three movies, store the resulting dictionaries in a list of tuples:
 MovieTweets = [(movie, get_twitter_term(movie)) for movie in threeMoviez]
 
 # Gather data about each user in the neighborhood of these tweets.
-	# Iterate through all of the tweets in MovieTweets and store the screenname of each tweets author, and also the screen name of each
-	# mentioned user. Store all of these screen names in a list called neighborhood
+	# Iterate through all of the tweets in MovieTweets and store the screenname of each tweets author, and also the screen name of each mentioned user. Store all of these screen names in a list called neighborhood:
 
-#The following function was pulled from project 3
-def get_mentioned_users(tweet):
-	return re.findall("@([0-9A-Z_a-z]+)", tweet)
+#Put all the retrieved tweets into a single list, called TweetList:
+TweetList = []
+for List in MovieTweets:
+	TweetList = TweetList + List[1]
 
-def combineLists(ListIn):
-	ListOut = []
-	for List in ListIn:
-		ListOut = ListOut + List[1]
-	return ListOut
+# Search this list for all of the mentioned users, storing the resulting list of all user strings into the variable neighborhood:
+neighborhood = []
+for maBoi in TweetList:
+	batch = re.findall("@([0-9A-Z_a-z]+)", maBoi.__str__())
+	neighborhood = neighborhood + batch
 
-def allMentionedUsers(tweetLists):
-	mentioned = []
-	for maBoi in tweetLists:
-		batch = get_mentioned_users(maBoi.__str__())
-		mentioned = mentioned + batch
-	return mentioned
-
-TweetList = combineLists(MovieTweets)
-
-# make all the gathered tweets into tweet objects	
+# Make all the gathered tweets into tweet objects. Store resulting list of tweet objects in variable YaTweets:
 YaTweets = []
 for movie in MovieTweets:
 	for maTweet in movie[1]:
 		YaTweets.append(Tweet(maTweet, movie[0]))
 
-
-# look for all mentioned useres in the gathered tweeets
-neighborhood = allMentionedUsers(TweetList)
-
-# making new list where everything is lowercase
+# Make a new list of user strings where all users are lowercase:
 lowerBoiz = []
 for aBoi in neighborhood:
 	lowerBoiz.append(aBoi.lower())
 
-#removing duplicates
+# Remove duplicate user strings:
 neighborhood = list(set(lowerBoiz))
 
-#iterate across the neighborhood list and create an instance of TwitterUsers for each screenName in this list.
-#convert all those user strings into user objects
+# Iterate across the neighborhood list and create an instance of TwitterUsers for each screenName in this list.
+# Convert all those user strings into user objects.
+# The try/except prevents run time errors due to suspended or non-existent users.
 maHood = []
-print(neighborhood)
 for maBoi in neighborhood:
 	try:
 		maBoi = get_twitter_user(maBoi)
@@ -279,8 +261,6 @@ for maBoi in neighborhood:
 	# rating - string that represents the movie's IMDB rating
 	# top_actor - string name of the top billed actor in the movie
 
-
-
 conn = sqlite3.connect('finalproject.db')
 cur = conn.cursor()
 
@@ -301,12 +281,8 @@ statement += 'Movies (movie_id INTEGER PRIMARY KEY, title TEXT, director TEXT, l
 cur.execute(statement)
 
 
-userList = [get_twitter_user("TheRock"), get_twitter_user("RealHughJackman"), get_twitter_user("JordanPeele")]
-
-
-
-#the following is adapted from Project 3
-#adding to user table
+# The following is adapted from Project 3
+# Add data to Users table:
 element_list = []
 for maBoi in maHood:
 		stuff = maBoi.infoList()
@@ -319,16 +295,12 @@ for maBoi in maHood:
 
 statement = 'INSERT INTO Users VALUES (?, ?, ?, ?)'    
 for element in element_list:
-	cur.execute(statement, element)
+	try:
+		cur.execute(statement, element)
+	except:
+		pass
 
-	# tweet_text - the text in the tweet
-	# tweet_id - the INTEGER PRIMARY KEY, with the string ID of the tweet from Twitter
-	# user - the ID string that represents the user - references the Users table
-	# movie - the string of the movie search the tweet came from; it will reference the Movies table
-	# favorites - integer that represents the number of favorites that the tweet has
-	# retweets - integer that represents the number of retweets that the tweet has
-
-#adding to Tweet table
+# Add data to Tweets table:
 element_list = []
 for maBoi in YaTweets:
 		stuff = maBoi.infoList()
@@ -348,15 +320,7 @@ for element in element_list:
 	except:
 		pass
 
-	# movie_id - INTEGER PRIMARY KEY, with the string ID of the movie in the OMDB
-	# title - string title of the movie
-	# director - string name of the movie's director
-	# languages - integer that represents the number of languages the movie is in
-	# rating - string that represents the movie's IMDB rating
-	# top_actor - string name of the top billed actor in the movie
-
-
-#adding to Movie table
+# Add data to Movies table:
 element_list = []
 for maBoi in threeMovies:
 		stuff = maBoi.infoList()
@@ -371,14 +335,17 @@ for maBoi in threeMovies:
 
 statement = 'INSERT INTO Movies VALUES (?, ?, ?, ?, ?, ?)'    
 for element in element_list:
-	cur.execute(statement, element)
+	try:
+		cur.execute(statement, element)
+	except:
+		pass
 
 conn.commit()
 
 
 # Make some data base queries to find out interesting information:
 
-	# Grab all the movies with a rating > 7
+	# Grab all the movies with a rating > 7:
 movie_tweets = "SELECT title, rating FROM Movies WHERE rating > 7"
 cur.execute(movie_tweets)
 goodRatings = cur.fetchall()
@@ -388,28 +355,29 @@ noticed_tweets = "SELECT Tweets.tweet_text, Tweets.retweets, Movies.title FROM T
 cur.execute(noticed_tweets)
 noticed_tweets = cur.fetchall()
 
-	# Grab all the movies with more than 1 language
+	# Grab all the movies with more than 1 language:
 movie_actors = "SELECT title, languages FROM Movies WHERE languages > 1"
 cur.execute(movie_actors)
 multilingual = cur.fetchall()
 
 
-#Process the acquired data
+#Process the acquired data:
 
-#processing the noticed_tweets
+# Process the noticed_tweets:
 disp = list(set(noticed_tweets))
-	#using a list comprehension to place data in managable way
+	# Use a list comprehension to place data in managable way:
 disp = [(tup[2], [tup[1], tup[0]]) for tup in disp]
-	#using sort fn with keyword to sort movies based on how tweeted about they were
+	# Use sort fn with keyword to sort movies based on how tweeted about they were:
 disp = sorted(disp, key=lambda tup: -tup[1][0])
 
+	# Use regex to find the tweets with the phrase "win":
 promotionalTweets = 0
 for tweet in  disp:
-	temp = re.findall("chance to win", str(tweet[1][1]))
+	temp = re.findall("[Ww][Ii][Nn]", str(tweet[1][1]))
 	promotionalTweets = promotionalTweets + len(temp)
 
 
-#defining a generator to rate the movies upon output to file
+	# Define a generator to rate the movies upon output to file:
 def outputGen(movieInputs):
 	i = 1
 	for movie in movieInputs:
@@ -419,7 +387,7 @@ def outputGen(movieInputs):
 
 
 # Create an output:
-output_filename = "206_final_project_output.json"
+output_filename = "206_final_project_output.txt"
 f = open(output_filename,'w')
 
 f.write("The following movies were searched for: \n")
@@ -439,23 +407,13 @@ for guy in outputGen(disp):
 	f.write(guy)
 
 f.write("Of these tweets, " + str(promotionalTweets) + " were chances to win free tickets or merch")
-
-
-#Using a generator to print the top tweeted about movies
-
-'''
-for guy in outputGen(TopMoviesSorted):
-	f.write(guy)
-'''
-
-
-
 f.close()
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
-# Testing cache loading: 
+# Test cache loading: 
 get_OMDB_info("waterworld")
+get_twitter_user("TheRock")
 
 class DatabaseTests(unittest.TestCase):
 
@@ -478,7 +436,7 @@ class DatabaseTests(unittest.TestCase):
 class TwitterTests(unittest.TestCase):
 
 	def test_number_of_gotten_tweets(self):
-		self.assertEqual(len(MovieTweets[0][1]), 10)
+		self.assertEqual(len(MovieTweets[0][1]), 30)
 
 	def test_term_caching(self):
 		self.assertTrue("Power Rangers_tweets" in cache_dictionary)
@@ -493,7 +451,15 @@ class OMDBtests(unittest.TestCase):
 
 class Movietests(unittest.TestCase):
 
-	def test_str(self):
+	def test_movie_constructor_1(self):
+		M = Movie("Argo")
+		self.assertEqual(M.director, "Ben Affleck")
+
+	def test__movie_constructor_2(self):
+		M = Movie("The Notebook")
+		self.assertEqual(M.IMDB, 7.9)
+
+	def test_str_1(self):
 		M = Movie(get_OMDB_info("waterworld"))
 		self.assertEqual(M.__str__(), "Waterworld")
 
