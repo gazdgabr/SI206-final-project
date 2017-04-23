@@ -86,7 +86,8 @@ def get_twitter_term(keyPhrase):
 		results = cache_dictionary[keyPhrase + "_tweets"]
 	else:
 		results = api.search(q=keyPhrase, count=10)
-		cache_dictionary[keyPhrase + "_tweets"] = results["statuses"]
+		results = results["statuses"]
+		cache_dictionary[keyPhrase + "_tweets"] = results
 		
 		f = open(cache_filename,'w')
 		f.write(json.dumps(cache_dictionary))
@@ -150,6 +151,7 @@ class Movie(object):
 		self.IMDB = MovieDiction["imdbRating"]
 		self.actors = MovieDiction["Actors"].split(", ")
 		self.numLang = len(MovieDiction["Language"].split(", "))
+		self.id = MovieDiction["imdbID"]
 
 	# Define a _str_ method that returns the name of the movie
 	def __str__(self):
@@ -157,7 +159,7 @@ class Movie(object):
 
 	# Define a method called infoList which returns a list in this format: [director, imdb rating, list of actors, number of languages]
 	def infoList(self):
-		return [self.director, self.IMDB, self.actors, self.numLang]
+		return [self.director, self.IMDB, self.actors, self.numLang, self.id]
 
 class Tweet(object):
 
@@ -178,7 +180,9 @@ class Tweet(object):
 	def infoList(self):
 		return [self.tweet_text, self.user, self.movie, self.favorites, self.retweets]
 
-
+print(get_OMDB_info("waterworld").keys())
+print(get_OMDB_info("shrek")["imdbID"])
+print(type(get_OMDB_info("waterworld")["imdbID"]))
 
 # make a list containing the names of three movies
 threeMovies = ["logan", "get out", "fate of the furious"]
@@ -214,7 +218,6 @@ def allMentionedUsers(tweetLists):
 	mentioned = []
 	for maBoi in tweetLists:
 		batch = get_mentioned_users(maBoi.__str__())
-		print(len(batch))
 		mentioned = mentioned + batch
 	return mentioned
 
@@ -330,7 +333,7 @@ for maBoi in YaTweets:
 		movie = stuff[2]
 		favorites = stuff[3]
 		retweets = stuff[4]
-		element_list.append((tweet_id, tweet_text, user, movie, favorites, retweets))
+		element_list.append((tweet_text, tweet_id, user, movie, favorites, retweets))
 
 statement = 'INSERT INTO Tweets VALUES (?, ?, ?, ?, ?, ?)'    
 for element in element_list:
@@ -343,20 +346,21 @@ for element in element_list:
 	# rating - string that represents the movie's IMDB rating
 	# top_actor - string name of the top billed actor in the movie
 
+
 #adding to Movie table
 element_list = []
-for maBoi in TweetList:
+for maBoi in threeMovies:
 		stuff = maBoi.infoList()
 
-		movie_id = int(maBoi.__str__())
-		title = stuff[0]
-		director = stuff[1]
-		languages = stuff[2]
-		rating = stuff[3]
-		top_actor = stuff[4]
-		element_list.append((tweet_id, tweet_text, user, movie, favorites, retweets))
+		movie_id = stuff[4]
+		title = stuff.__str__()
+		director = stuff[0]
+		languages = stuff[3]
+		rating = stuff[1]
+		top_actor = stuff[2][0]
+		element_list.append((movie_id, title, director, languages, rating, top_actor))
 
-statement = 'INSERT INTO Movie VALUES (?, ?, ?, ?, ?, ?)'    
+statement = 'INSERT INTO Movies VALUES (?, ?, ?, ?, ?, ?)'    
 for element in element_list:
 	cur.execute(statement, element)
 
