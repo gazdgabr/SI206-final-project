@@ -31,6 +31,7 @@ import sqlite3
 import unittest
 import itertools
 import random
+import itertools
 
 ## Tweepy setup code borrowed from code given by Professor Cohen this semester.
 ##### TWEEPY SETUP CODE:
@@ -70,7 +71,6 @@ def get_twitter_user(desiredUser):
 		User = cache_dictionary[desiredUser + "_user"]
 	else:
 		User = api.get_user(desiredUser)
-		#userInfo = [User["id"], User["screen_name"], User["favourites_count"], User["followers_count"]]
 		cache_dictionary[desiredUser + "_user"] = User
 
 		f = open(cache_filename,'w')
@@ -85,7 +85,7 @@ def get_twitter_term(keyPhrase):
 	if keyPhrase + "_tweets"  in cache_dictionary:
 		results = cache_dictionary[keyPhrase + "_tweets"]
 	else:
-		results = api.search(q=keyPhrase, count=10)
+		results = api.search(q=keyPhrase, count=30)
 		results = results["statuses"]
 		cache_dictionary[keyPhrase + "_tweets"] = results
 		
@@ -183,14 +183,14 @@ class Tweet(object):
 #print(get_OMDB_info("waterworld").keys())
 #print(get_OMDB_info("shrek")["imdbID"])
 #print(Movie(get_OMDB_info("waterworld")).infoList())
-
+#print(get_twitter_term("trump")[0])
 
 # make a list containing the names of three movies
-threeMovies = ["logan", "get out", "fate of the furious"]
+threeMoviez = ["Power Rangers", "Beauty and the Beast", "The Fate of the Furious", "The Boss Baby", "Hidden Figures", "Smurfs: The Lost Village", "Phoenix Forgotten"]
 
 # invoke the get_OMDB_info() function on all three of these movies
 threeMovieDictions = []
-for movie in threeMovies:
+for movie in threeMoviez:
 	threeMovieDictions.append(get_OMDB_info(movie))
 
 # Using threeMovieDiction, create a Movie instance class for each of the three movies
@@ -198,8 +198,8 @@ threeMovies = []
 for movie in threeMovieDictions:
 	threeMovies.append(Movie(movie))
 
-# invoke the get_twitter_term() function for each of those three movies, store the resulting dictionaries in a list
-MovieTweets = [get_twitter_term("fate of the furious"), get_twitter_term("logan"), get_twitter_term("get out")]
+# invoke the get_twitter_term() function for each of those three movies, store the resulting dictionaries in a list of tuples
+MovieTweets = [(movie, get_twitter_term(movie)) for movie in threeMoviez]
 
 # Gather data about each user in the neighborhood of these tweets.
 	# Iterate through all of the tweets in MovieTweets and store the screenname of each tweets author, and also the screen name of each
@@ -212,7 +212,7 @@ def get_mentioned_users(tweet):
 def combineLists(ListIn):
 	ListOut = []
 	for List in ListIn:
-		ListOut = ListOut + List
+		ListOut = ListOut + List[1]
 	return ListOut
 
 def allMentionedUsers(tweetLists):
@@ -226,8 +226,9 @@ TweetList = combineLists(MovieTweets)
 
 # make all the gathered tweets into tweet objects	
 YaTweets = []
-for maTweet in TweetList:
-	YaTweets.append(Tweet(maTweet))
+for movie in MovieTweets:
+	for maTweet in movie[1]:
+		YaTweets.append(Tweet(maTweet, movie[0]))
 
 
 # look for all mentioned useres in the gathered tweeets
@@ -244,10 +245,14 @@ neighborhood = list(set(lowerBoiz))
 #iterate across the neighborhood list and create an instance of TwitterUsers for each screenName in this list.
 #convert all those user strings into user objects
 maHood = []
+print(neighborhood)
 for maBoi in neighborhood:
-	maBoi = get_twitter_user(maBoi)
-	maBoi = twitterUsers(maBoi)
-	maHood.append(maBoi)
+	try:
+		maBoi = get_twitter_user(maBoi)
+		maBoi = twitterUsers(maBoi)
+		maHood.append(maBoi)
+	except:
+		pass
 	
 
 # Create a database file called finalproject.db. It should have three tables: Tweets, Users, and Movies. Each table should be laid out as follows:
@@ -338,7 +343,10 @@ for maBoi in YaTweets:
 
 statement = 'INSERT INTO Tweets VALUES (?, ?, ?, ?, ?, ?)'    
 for element in element_list:
-	cur.execute(statement, element)
+	try:
+		cur.execute(statement, element)
+	except:
+		pass
 
 	# movie_id - INTEGER PRIMARY KEY, with the string ID of the movie in the OMDB
 	# title - string title of the movie
@@ -354,7 +362,7 @@ for maBoi in threeMovies:
 		stuff = maBoi.infoList()
 
 		movie_id = int(stuff[4])
-		title = stuff.__str__()
+		title = maBoi.__str__()
 		director = stuff[0]
 		languages = stuff[3]
 		rating = stuff[1]
@@ -367,22 +375,87 @@ for element in element_list:
 
 conn.commit()
 
-# make some data base queries to find out interesting information
-	# has a user tweeted about multiple movies?
-	# has a user retweeted a director of one of the movies?
-	# has an actor been in multiple of these movies?
-# create an output
+
+# Make some data base queries to find out interesting information:
+
+	# Grab all the movies with a rating > 7
+movie_tweets = "SELECT title, rating FROM Movies WHERE rating > 7"
+cur.execute(movie_tweets)
+goodRatings = cur.fetchall()
+
+	# Which are the tweets have been retweeted more than 100 times?
+noticed_tweets = "SELECT Tweets.tweet_text, Tweets.retweets, Movies.title FROM Tweets INNER JOIN Movies ON Tweets.movie=movies.title WHERE retweets > 100"
+cur.execute(noticed_tweets)
+noticed_tweets = cur.fetchall()
+
+	# Grab all the movies with more than 1 language
+movie_actors = "SELECT title, languages FROM Movies WHERE languages > 1"
+cur.execute(movie_actors)
+multilingual = cur.fetchall()
+
+
+#Process the acquired data
+
+#processing the noticed_tweets
+disp = list(set(noticed_tweets))
+	#using a list comprehension to place data in managable way
+disp = [(tup[2], [tup[1], tup[0]]) for tup in disp]
+	#using sort fn with keyword to sort movies based on how tweeted about they were
+disp = sorted(disp, key=lambda tup: -tup[1][0])
+
+promotionalTweets = 0
+for tweet in  disp:
+	temp = re.findall("chance to win", str(tweet[1][1]))
+	promotionalTweets = promotionalTweets + len(temp)
+
+
+#defining a generator to rate the movies upon output to file
+def outputGen(movieInputs):
+	i = 1
+	for movie in movieInputs:
+		yield str(i) + ". " + movie[0] + " - " + str(movie[1][0]) + " retweets\n" + "		" + str(movie[1][1]) + "\n\n"
+		i = i + 1
+
+
+
+# Create an output:
+output_filename = "206_final_project_output.json"
+f = open(output_filename,'w')
+
+f.write("The following movies were searched for: \n")
+for movie in threeMoviez:
+	f.write(movie + "\n")
+
+f.write("\nOf those movies, the following were rated above 7 by imdb:\n")
+for movie in goodRatings:
+	f.write(movie[0] + " - " + movie[1] + "\n")
+
+f.write("\nOf those movies, the following were in more than 1 language:\n")
+for movie in multilingual:
+	f.write(movie[0] + " - " + str(movie[1]) + " languages\n")
+
+f.write("\nThese are the tweets about these movies which have been retweeted atleast 100 times, in order:\n")
+for guy in outputGen(disp):
+	f.write(guy)
+
+f.write("Of these tweets, " + str(promotionalTweets) + " were chances to win free tickets or merch")
+
+
+#Using a generator to print the top tweeted about movies
+
+'''
+for guy in outputGen(TopMoviesSorted):
+	f.write(guy)
+'''
+
+
+
+f.close()
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
 # Testing cache loading: 
 get_OMDB_info("waterworld")
-get_OMDB_info("elf")
-get_OMDB_info("ghostbusters")
-get_OMDB_info("the exorcism")
-get_OMDB_info("the princess bride")
-
-
 
 class DatabaseTests(unittest.TestCase):
 
@@ -395,7 +468,7 @@ class DatabaseTests(unittest.TestCase):
 		self.assertTrue(len(dis)>=3)
 
 	def test_db_movies(self):
-		conn = sqlite3.connect('finalproject|.db')
+		conn = sqlite3.connect('finalproject.db')
 		cur = conn.cursor()
 		cur.execute('SELECT * FROM Movies');
 		dat = cur.fetchall()
@@ -405,15 +478,13 @@ class DatabaseTests(unittest.TestCase):
 class TwitterTests(unittest.TestCase):
 
 	def test_number_of_gotten_tweets(self):
-		self.assertEqual(len(get_twitter_term("SNL")), 10)
+		self.assertEqual(len(MovieTweets[0][1]), 10)
 
 	def test_term_caching(self):
-		get_twitter_term("banana")
-		self.assertTrue("banana_tweets" in cache_dictionary)
+		self.assertTrue("Power Rangers_tweets" in cache_dictionary)
 
 	def test_user_caching(self):
-		get_twitter_user("POTUS")
-		self.assertTrue("POTUS_user" in cache_dictionary)
+		self.assertTrue("TheRock_user" in cache_dictionary)
 
 class OMDBtests(unittest.TestCase):
 
