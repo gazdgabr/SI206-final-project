@@ -220,25 +220,30 @@ def allMentionedUsers(tweetLists):
 
 TweetList = combineLists(MovieTweets)
 
-# make all the gathered tweets into tweet objects
+# make all the gathered tweets into tweet objects	
+YaTweets = []
 for maTweet in TweetList:
-	maTweet = Tweet(maTweet)
+	YaTweets.append(Tweet(maTweet))
 
 
 # look for all mentioned useres in the gathered tweeets
 neighborhood = allMentionedUsers(TweetList)
 
+# making new list where everything is lowercase
+lowerBoiz = []
+for aBoi in neighborhood:
+	lowerBoiz.append(aBoi.lower())
+
+#removing duplicates
+neighborhood = list(set(lowerBoiz))
+
 #iterate across the neighborhood list and create an instance of TwitterUsers for each screenName in this list.
 #convert all those user strings into user objects
+maHood = []
 for maBoi in neighborhood:
 	maBoi = get_twitter_user(maBoi)
 	maBoi = twitterUsers(maBoi)
-	print(maBoi.infoList()[0])
-
-
-
-
-
+	maHood.append(maBoi)
 	
 
 # Create a database file called finalproject.db. It should have three tables: Tweets, Users, and Movies. Each table should be laid out as follows:
@@ -294,12 +299,13 @@ userList = [get_twitter_user("TheRock"), get_twitter_user("RealHughJackman"), ge
 #the following is adapted from Project 3
 #adding to user table
 element_list = []
-for maBoi in neighborhood:
+for maBoi in maHood:
 		stuff = maBoi.infoList()
+
 		user_id_item = maBoi.__str__()
-		screen_name_item = maBoi[0]
-		user_favs_item = maBoi[1]
-		followers_item = maBoi[2]
+		screen_name_item = stuff[0]
+		user_favs_item = stuff[1]
+		followers_item = stuff[2]
 		element_list.append((user_id_item, screen_name_item, user_favs_item, followers_item))
 
 statement = 'INSERT INTO Users VALUES (?, ?, ?, ?)'    
@@ -315,18 +321,44 @@ for element in element_list:
 
 #adding to Tweet table
 element_list = []
-for maBoi in TweetList:
+for maBoi in YaTweets:
 		stuff = maBoi.infoList()
-		tweet_id = int(maBoi.__str__())
-		screen_name_item = maBoi[0]
-		user_favs_item = maBoi[1]
-		followers_item = maBoi[2]
-		element_list.append((user_id_item, screen_name_item, user_favs_item, followers_item))
+
+		tweet_id = int(maBoi.priKey())
+		tweet_text = stuff[0]
+		user = stuff[1]
+		movie = stuff[2]
+		favorites = stuff[3]
+		retweets = stuff[4]
+		element_list.append((tweet_id, tweet_text, user, movie, favorites, retweets))
 
 statement = 'INSERT INTO Tweets VALUES (?, ?, ?, ?, ?, ?)'    
 for element in element_list:
 	cur.execute(statement, element)
 
+	# movie_id - INTEGER PRIMARY KEY, with the string ID of the movie in the OMDB
+	# title - string title of the movie
+	# director - string name of the movie's director
+	# languages - integer that represents the number of languages the movie is in
+	# rating - string that represents the movie's IMDB rating
+	# top_actor - string name of the top billed actor in the movie
+
+#adding to Movie table
+element_list = []
+for maBoi in TweetList:
+		stuff = maBoi.infoList()
+
+		movie_id = int(maBoi.__str__())
+		title = stuff[0]
+		director = stuff[1]
+		languages = stuff[2]
+		rating = stuff[3]
+		top_actor = stuff[4]
+		element_list.append((tweet_id, tweet_text, user, movie, favorites, retweets))
+
+statement = 'INSERT INTO Movie VALUES (?, ?, ?, ?, ?, ?)'    
+for element in element_list:
+	cur.execute(statement, element)
 
 conn.commit()
 
