@@ -151,7 +151,7 @@ class Movie(object):
 		self.IMDB = MovieDiction["imdbRating"]
 		self.actors = MovieDiction["Actors"].split(", ")
 		self.numLang = len(MovieDiction["Language"].split(", "))
-		self.id = MovieDiction["imdbID"]
+		self.id = int((re.findall("tt([0-9]*)", MovieDiction["imdbID"]))[0])
 
 	# Define a _str_ method that returns the name of the movie
 	def __str__(self):
@@ -180,9 +180,10 @@ class Tweet(object):
 	def infoList(self):
 		return [self.tweet_text, self.user, self.movie, self.favorites, self.retweets]
 
-print(get_OMDB_info("waterworld").keys())
-print(get_OMDB_info("shrek")["imdbID"])
-print(type(get_OMDB_info("waterworld")["imdbID"]))
+#print(get_OMDB_info("waterworld").keys())
+#print(get_OMDB_info("shrek")["imdbID"])
+#print(Movie(get_OMDB_info("waterworld")).infoList())
+
 
 # make a list containing the names of three movies
 threeMovies = ["logan", "get out", "fate of the furious"]
@@ -352,7 +353,7 @@ element_list = []
 for maBoi in threeMovies:
 		stuff = maBoi.infoList()
 
-		movie_id = stuff[4]
+		movie_id = int(stuff[4])
 		title = stuff.__str__()
 		director = stuff[0]
 		languages = stuff[3]
@@ -427,7 +428,7 @@ class Movietests(unittest.TestCase):
 
 	def test_infoList(self):
 		M = Movie(get_OMDB_info("waterworld"))
-		self.assertEqual(M.infoList(), ["Kevin Reynolds", "6.1", ["Kevin Costner", "Chaim Jeraffi", "Rick Aviles", "R.D. Call"], 1])
+		self.assertEqual(M.infoList(), ["Kevin Reynolds", "6.1", ["Kevin Costner", "Chaim Jeraffi", "Rick Aviles", "R.D. Call"], 1, 114898 ])
 
 
 
