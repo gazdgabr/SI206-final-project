@@ -67,8 +67,10 @@ except:
 # Write a function called get_twitter_user that goes to Twitter, gets data about a Twitter user, and dumps it in the cache:
 
 def get_twitter_user(desiredUser):
+
 	if desiredUser + "_user" in cache_dictionary:
 		User = cache_dictionary[desiredUser + "_user"]
+
 	else:
 		User = api.get_user(desiredUser)
 		cache_dictionary[desiredUser + "_user"] = User
@@ -101,6 +103,7 @@ def get_twitter_term(keyPhrase):
 def get_OMDB_info(movie):
 	if movie in cache_dictionary:
 		results = cache_dictionary[movie]
+
 	else:
 		baseurl = "http://www.omdbapi.com/?t="
 		request = baseurl + movie
@@ -415,6 +418,115 @@ f.close()
 get_OMDB_info("waterworld")
 get_twitter_user("TheRock")
 
+
+class DataAccessTests(unittest.TestCase):
+
+	def test_twitter_term_len(self):
+		self.assertEqual(len(MovieTweets[0][1]), 30)
+
+	def test_twitter_term_caching(self):
+		self.assertTrue("Power Rangers_tweets" in cache_dictionary)
+
+	def test_twitter_user_caching(self):
+		self.assertTrue("TheRock_user" in cache_dictionary)
+
+	def test_twitter_user_2(self):
+		self.assertTrue(get_twitter_user("TheRock")["screen_name"], "TheRock")
+
+	def test_OMDB_info(self):
+		self.assertTrue("Hidden Figures" in cache_dictionary)
+
+	def test_get_OMDB_info_success(self):
+		self.assertEqual(get_OMDB_info("waterworld")["Director"], "Kevin Reynolds")
+
+class TwitterUsersTests(unittest.TestCase):
+
+	def test_twitterusers_constructor_1(self):
+		TwUser = twitterUsers(get_twitter_user("TheRock"))
+		self.assertEqual(TwUser.screen_name, "TheRock")
+
+	def test_twitterusers_constructor_2(self):
+		TwUser = twitterUsers(get_twitter_user("HJBenjamin"))
+		self.assertEqual(TwUser.user_id, 312860399)
+
+	def test_twitterusers_str_1(self):
+		TwUser = twitterUsers(get_twitter_user("HJBenjamin"))
+		self.assertEqual(type(TwUser.__str__()), type(6))
+
+	def test_twitterusers_str_2(self):
+		TwUser = twitterUsers(get_twitter_user("POTUS"))
+		self.assertEqual(type(TwUser.__str__()), type(24))
+
+	def test_twitterusers_infoList_1(self):
+		TwUser = twitterUsers(get_twitter_user("POTUS"))
+		self.assertEqual(TwUser.screen_name, "POTUS")
+
+	def test_twitterusers_infoList_2(self):
+		TwUser = twitterUsers(get_twitter_user("Beyonce"))
+		self.assertEqual(len(TwUser.infoList()), 3)
+
+
+class MovieTests(unittest.TestCase):
+
+	def test_movie_constructor_1(self):
+		M = Movie(get_OMDB_info("Argo"))
+		self.assertEqual(M.director, "Ben Affleck")
+
+	def test__movie_constructor_2(self):
+		M = Movie(get_OMDB_info("The Notebook"))
+		self.assertEqual(M.IMDB, "7.9")
+
+	def test_movie_str_1(self):
+		M = Movie(get_OMDB_info("waterworld"))
+		self.assertEqual(M.__str__(), "Waterworld")
+
+	def test_movie_str_2(self):
+		M = Movie(get_OMDB_info("night at the museum"))
+		self.assertEqual(M.__str__(), "Night at the Museum")
+
+	def test_movie_infoList_1(self):
+		M = Movie(get_OMDB_info("waterworld"))
+		self.assertEqual(M.infoList(), ["Kevin Reynolds", "6.1", ["Kevin Costner", "Chaim Jeraffi", "Rick Aviles", "R.D. Call"], 1, 114898 ])
+
+	def test_movie_infoList_2(self):
+		M = Movie(get_OMDB_info("hidden figures"))
+		self.assertEqual(M.infoList(), ["Theodore Melfi", "7.9", ["Taraji P. Henson", "Octavia Spencer", "Janelle Monáe", "Kevin Costner"], 1, 4846340])
+
+class TweetTests(unittest.TestCase):
+
+	def test_tweet_constructor_1(self):
+		T = Tweet(get_twitter_term("argo")[0])
+		self.assertEqual(type(T.movie), type("Catto"))
+
+	def test_tweet_constructor_2(self):
+		T = Tweet(get_twitter_term("night at the museum")[0])
+		self.assertEqual(type(T.tweet_id), type(314))
+
+	def test_tweet_str_1(self):
+		T = Tweet(get_twitter_term("hidden figures")[0])
+		self.assertEqual(type(T.__str__()), type("brouhaha".encode('utf-8')))
+
+	def test_tweet_str_2(self):
+		T = Tweet(get_twitter_term("fate of the furious")[0])
+		self.assertEqual(type(T.__str__()), type("This is a little redundant but nothing else to test lol".encode('utf-8')))
+
+	def test_prikey_1(self):
+		T = Tweet(get_twitter_term("dogville")[0])
+		self.assertEqual(type(T.priKey()),type(6))
+
+	def test_prikey_2(self):
+		T = Tweet(get_twitter_term("the boss baby")[0])
+		self.assertTrue(T.priKey() > 1)
+
+	def test_tweet_infolist_1(self):
+		T = Tweet(get_twitter_term("phoenix forgotten")[0])
+		self.assertEqual(len(T.infoList()), 5)
+
+	def test_tweet_infolist_2(self):
+		T = Tweet(get_twitter_term("power rangers")[0], "Power Rangers")
+		self.assertEqual(T.infoList()[2], "Power Rangers")
+
+
 class DatabaseTests(unittest.TestCase):
 
 	def test_db_tweets(self):
@@ -432,41 +544,6 @@ class DatabaseTests(unittest.TestCase):
 		dat = cur.fetchall()
 		conn.close()
 		self.assertTrue(len(dat)>=3)
-
-class TwitterTests(unittest.TestCase):
-
-	def test_number_of_gotten_tweets(self):
-		self.assertEqual(len(MovieTweets[0][1]), 30)
-
-	def test_term_caching(self):
-		self.assertTrue("Power Rangers_tweets" in cache_dictionary)
-
-	def test_user_caching(self):
-		self.assertTrue("TheRock_user" in cache_dictionary)
-
-class OMDBtests(unittest.TestCase):
-
-	def test_get_OMDB_info_success(self):
-		self.assertEqual(get_OMDB_info("waterworld")["Director"], "Kevin Reynolds")
-
-class Movietests(unittest.TestCase):
-
-	def test_movie_constructor_1(self):
-		M = Movie("Argo")
-		self.assertEqual(M.director, "Ben Affleck")
-
-	def test__movie_constructor_2(self):
-		M = Movie("The Notebook")
-		self.assertEqual(M.IMDB, 7.9)
-
-	def test_str_1(self):
-		M = Movie(get_OMDB_info("waterworld"))
-		self.assertEqual(M.__str__(), "Waterworld")
-
-	def test_infoList(self):
-		M = Movie(get_OMDB_info("waterworld"))
-		self.assertEqual(M.infoList(), ["Kevin Reynolds", "6.1", ["Kevin Costner", "Chaim Jeraffi", "Rick Aviles", "R.D. Call"], 1, 114898 ])
-
 
 
 
