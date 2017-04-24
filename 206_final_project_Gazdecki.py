@@ -1,25 +1,9 @@
-###### INSTRUCTIONS ###### 
-
-# An outline for preparing your final project assignment is in this file.
-
-# Below, throughout this file, you should put comments that explain exactly what you should do for each step of your project. 
-# You should specify variable names and processes to use. For example, "Use dictionary accumulation with the list you just created 
-# to create a dictionary called tag_counts, where the keys represent tags on flickr photos and the values represent frequency of 
-# times those tags occur in the list."
-
-# You can use second person ("You should...") or first person ("I will...") or whatever is comfortable for you, as long as you are 
-# clear about what should be done.
-
-# Some parts of the code should already be filled in when you turn this in:
-# - At least 1 function which gets and caches data from 1 of your data sources, and an invocation of each of those functions to 
-# show that they work 
-# - Tests at the end of your file that accord with those instructions (will test that you completed those instructions correctly!)
-# - Code that creates a database file and tables as your project plan explains, such that your program can be run over and over 
-# again without error and without duplicate rows in your tables.
-# - At least enough code to load data into 1 of your database tables (this should accord with your instructions/tests)
-
-######### END INSTRUCTIONS #########
-
+"""
+Gabriella Gazdecki
+SI 206 W17 
+Final Project
+Option 2 - API Mashup: Twitter & OMDB
+"""
 # Put all import statements you need here.
 import json
 import requests
@@ -62,8 +46,6 @@ except:
 	cache_dictionary = {}
 
 
-
-
 # Write a function called get_twitter_user that goes to Twitter, gets data about a Twitter user, and dumps it in the cache:
 
 def get_twitter_user(desiredUser):
@@ -97,7 +79,6 @@ def get_twitter_term(keyPhrase):
 	return results
 
 
-
 # Write a function called get_OMDB_info that goes to the OMDB API, gets data about a specified movie, and dumps the result in the cache:
 
 def get_OMDB_info(movie):
@@ -123,7 +104,6 @@ def get_OMDB_info(movie):
 # Create a class to handle Twitter users, call it twitterUsers. This will contain variables to store the user's ID, screen name, favorites count, and followers count. 
 
 class twitterUsers(object):
-	#User["id"], User["screen_name"], User["favourites_count"], User["followers_count"]
 
 	# Define a constructor which takes in a dictionary representing a Twitter user, and stores the pertinent data in the proper variables:
 	def __init__(self, UserDiction):
@@ -181,9 +161,8 @@ class Tweet(object):
 	def infoList(self):
 		return [self.tweet_text, self.user, self.movie, self.favorites, self.retweets]
 
-
-# Create a list containing the names of three movies:
-threeMoviez = ["Power Rangers", "Beauty and the Beast", "The Fate of the Furious", "The Boss Baby", "Hidden Figures",
+# Create a list containing the names of three (or more) movies:
+threeMoviez = ["Power Rangers", "Pulp Fiction", "The Fate of the Furious", "The Boss Baby", "Hidden Figures",
 				 "Smurfs: The Lost Village", "Phoenix Forgotten"]
 
 # Invoke the get_OMDB_info() function on all three of these movies:
@@ -354,7 +333,7 @@ cur.execute(movie_tweets)
 goodRatings = cur.fetchall()
 
 	# Which are the tweets have been retweeted more than 100 times?
-noticed_tweets = "SELECT Tweets.tweet_text, Tweets.retweets, Movies.title FROM Tweets INNER JOIN Movies ON Tweets.movie=movies.title WHERE retweets > 100"
+noticed_tweets = "SELECT Tweets.tweet_text, Tweets.retweets, Movies.title, Movies.director FROM Tweets INNER JOIN Movies ON Tweets.movie=movies.title WHERE retweets > 100"
 cur.execute(noticed_tweets)
 noticed_tweets = cur.fetchall()
 
@@ -369,14 +348,14 @@ multilingual = cur.fetchall()
 # Process the noticed_tweets:
 disp = list(set(noticed_tweets))
 	# Use a list comprehension to place data in managable way:
-disp = [(tup[2], [tup[1], tup[0]]) for tup in disp]
-	# Use sort fn with keyword to sort movies based on how tweeted about they were:
+disp = [(tup[2], [tup[1], tup[0], tup[3]]) for tup in disp]
+	# Use sort function with keyword to sort movies based on how tweeted about they were:
 disp = sorted(disp, key=lambda tup: -tup[1][0])
 
 	# Use regex to find the tweets with the phrase "win":
 promotionalTweets = 0
 for tweet in  disp:
-	temp = re.findall("[Ww][Ii][Nn]", str(tweet[1][1]))
+	temp = re.findall("\s?#?[Ww][Ii][Nn]\s", str(tweet[1][1]))
 	promotionalTweets = promotionalTweets + len(temp)
 
 
@@ -386,7 +365,6 @@ def outputGen(movieInputs):
 	for movie in movieInputs:
 		yield str(i) + ". " + movie[0] + " - " + str(movie[1][0]) + " retweets\n" + "		" + str(movie[1][1]) + "\n\n"
 		i = i + 1
-
 
 
 # Create an output:
@@ -405,6 +383,8 @@ f.write("\nOf those movies, the following were in more than 1 language:\n")
 for movie in multilingual:
 	f.write(movie[0] + " - " + str(movie[1]) + " languages\n")
 
+f.write("\n" + disp[0][1][2] + " directed the most tweeted about movie, " + disp[0][0] + "\n")
+
 f.write("\nThese are the tweets about these movies which have been retweeted atleast 100 times, in order:\n")
 for guy in outputGen(disp):
 	f.write(guy)
@@ -412,12 +392,20 @@ for guy in outputGen(disp):
 f.write("Of these tweets, " + str(promotionalTweets) + " were chances to win free tickets or merch")
 f.close()
 
+conn.close()
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
 
 # Test cache loading: 
-get_OMDB_info("waterworld")
 get_twitter_user("TheRock")
-
+get_twitter_user("Beyonce")
+get_twitter_user("HJBenjamin")
+get_twitter_user("POTUS")
+get_twitter_term("dogville")
+get_twitter_term("argo")
+get_OMDB_info("Argo")
+get_OMDB_info("The Notebook")
+get_OMDB_info("night at the museum")
+get_OMDB_info("waterworld")
 
 class DataAccessTests(unittest.TestCase):
 
@@ -506,10 +494,6 @@ class TweetTests(unittest.TestCase):
 		T = Tweet(get_twitter_term("hidden figures")[0])
 		self.assertEqual(type(T.__str__()), type("brouhaha".encode('utf-8')))
 
-	def test_tweet_str_2(self):
-		T = Tweet(get_twitter_term("fate of the furious")[0])
-		self.assertEqual(type(T.__str__()), type("This is a little redundant but nothing else to test lol".encode('utf-8')))
-
 	def test_prikey_1(self):
 		T = Tweet(get_twitter_term("dogville")[0])
 		self.assertEqual(type(T.priKey()),type(6))
@@ -544,8 +528,6 @@ class DatabaseTests(unittest.TestCase):
 		dat = cur.fetchall()
 		conn.close()
 		self.assertTrue(len(dat)>=3)
-
-
 
 
 # Remember to invoke your tests so they will run! (Recommend using the verbosity=2 argument.)
